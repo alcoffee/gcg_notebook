@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>G-Deck Builder</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwindのダークモード設定をクラスベースにする
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        // カスタムカラーが必要なら定義
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts (Noto Sans JP) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        /* カード画像のスタイル */
+        .card-img {
+            aspect-ratio: 2.5 / 3.5;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+        .card-item:hover .card-img {
+            transform: scale(1.05);
+        }
+        /* スクロールバーのカスタマイズ */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; /* gray-300 */
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #4b5563; /* gray-600 */
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; /* gray-400 */
+        }
+        .dark ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280; /* gray-500 */
+        }
+        /* トースト通知のアニメーション */
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(20px); }
+        }
+        .toast {
+            animation: fadeInOut 3s forwards;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden text-gray-800 bg-[#f3f4f6] dark:bg-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <!-- ヘッダー -->
+    <header class="bg-blue-900 dark:bg-gray-800 text-white p-4 shadow-md flex justify-between items-center z-10 shrink-0 transition-colors duration-300">
+        <h1 class="text-xl font-bold flex items-center gap-2">
+            <span class="bg-yellow-500 text-blue-900 px-2 py-0.5 rounded text-sm font-black">GCG</span>
+            デッキビルダー
+        </h1>
+        <div class="flex items-center gap-4">
+            <div class="hidden md:block text-xs md:text-sm text-gray-300">
+                ※非公式ツール
+            </div>
+            <!-- ダークモード切り替えボタン -->
+            <button id="themeToggle" class="p-2 rounded hover:bg-white/10 transition focus:outline-none" aria-label="テーマ切り替え">
+                <!-- 太陽アイコン (ライトモード時表示) -->
+                <svg id="iconSun" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden dark:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+                <!-- 月アイコン (ダークモード時表示) -->
+                <svg id="iconMoon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 block dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-1 flex overflow-hidden">
+        
+        <!-- 左カラム：カードプール (検索・一覧) -->
+        <section class="flex-1 flex flex-col border-r border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 w-2/3 transition-colors duration-300">
+            <!-- フィルターエリア -->
+            <div class="p-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 grid grid-cols-2 md:grid-cols-4 gap-2 transition-colors duration-300">
+                <input type="text" id="searchInput" placeholder="名前・No.で検索" 
+                    class="col-span-2 p-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-600 dark:text-white dark:placeholder-gray-300">
+                
+                <select id="colorFilter" class="p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 dark:text-white">
+                    <option value="">全色</option>
+                    <option value="Red">赤</option>
+                    <option value="Blue">青</option>
+                    <option value="Green">緑</option>
+                    <option value="White">白</option>
+                </select>
+
+                <select id="typeFilter" class="p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 dark:text-white">
+                    <option value="">全タイプ</option>
+                    <option value="UNIT">ユニット</option>
+                    <option value="PILOT">パイロット</option>
+                    <option value="COMMAND">コマンド</option>
+                    <option value="BASE">ベース</option>
+                </select>
+            </div>
+            
+            <!-- カードリスト表示エリア -->
+            <div id="cardPool" class="flex-1 overflow-y-auto p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 content-start">
+                <!-- JavaScriptでここにカードが挿入されます -->
+                <div class="col-span-full text-center py-10 text-gray-500 dark:text-gray-400">
+                    データを読み込んでいます...
+                </div>
+            </div>
+        </section>
+
+        <!-- 右カラム：デッキ構築エリア -->
+        <section class="w-1/3 min-w-[300px] flex flex-col bg-gray-50 dark:bg-gray-900 shadow-xl z-10 border-l border-gray-200 dark:border-gray-700 transition-colors duration-300">
+            <!-- デッキ統計情報 -->
+            <div class="p-4 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm shrink-0 transition-colors duration-300">
+                <div class="flex justify-between items-end mb-2">
+                    <h2 class="font-bold text-lg dark:text-white">現在のデッキ</h2>
+                    <span id="totalCount" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0<span class="text-sm text-gray-500 dark:text-gray-400 font-normal">/50</span></span>
+                </div>
+                
+                <!-- 枚数内訳 -->
+                <div class="grid grid-cols-4 gap-1 text-center text-xs mb-3">
+                    <div class="bg-blue-100 dark:bg-blue-900 p-1 rounded">
+                        <div class="font-bold text-blue-800 dark:text-blue-200">UNIT</div>
+                        <div id="unitCount" class="dark:text-white">0</div>
+                    </div>
+                    <div class="bg-green-100 dark:bg-green-900 p-1 rounded">
+                        <div class="font-bold text-green-800 dark:text-green-200">PLT</div>
+                        <div id="pilotCount" class="dark:text-white">0</div>
+                    </div>
+                    <div class="bg-yellow-100 dark:bg-yellow-900 p-1 rounded">
+                        <div class="font-bold text-yellow-800 dark:text-yellow-200">CMD</div>
+                        <div id="commandCount" class="dark:text-white">0</div>
+                    </div>
+                    <div class="bg-gray-200 dark:bg-gray-700 p-1 rounded">
+                        <div class="font-bold text-gray-800 dark:text-gray-300">BASE</div>
+                        <div id="baseCount" class="dark:text-white">0</div>
+                    </div>
+                </div>
+
+                <!-- 色情報 -->
+                <div class="flex items-center justify-between text-sm">
+                    <span class="text-gray-600 dark:text-gray-400">使用カラー:</span>
+                    <div id="deckColors" class="flex gap-1">
+                        <span class="text-gray-400">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- デッキリスト -->
+            <div id="deckList" class="flex-1 overflow-y-auto p-2 space-y-2">
+                <!-- JavaScriptでここにデッキのカードが挿入されます -->
+                <div class="text-center text-gray-400 mt-10 text-sm">
+                    リストからカードを選択して<br>デッキに追加してください
+                </div>
+            </div>
+
+            <!-- アクションボタン -->
+            <div class="p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shrink-0 grid grid-cols-2 gap-2 transition-colors duration-300">
+                <button onclick="deckBuilder.clearDeck()" class="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 py-2 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition">
+                    リセット
+                </button>
+                <button onclick="deckBuilder.exportDeck()" class="bg-blue-600 dark:bg-blue-700 text-white py-2 rounded hover:bg-blue-700 dark:hover:bg-blue-600 transition">
+                    リストをコピー
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- トースト通知用コンテナ -->
+    <div id="toastContainer" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none"></div>
+
+    <script>
+        /**
+         * 設定とデータソース
+         * 将来的にセットが増えた場合はここに追記してください。
+         */
+        const CONFIG = {
+            sources: [
+                {
+                    id: 'gd01',
+                    name: '第一弾',
+                    jsonUrl: './gd01.json',
+                    imageBaseUrl: './images/gd01/'
+                }
+            ],
+            maxDeckSize: 50,
+            maxCopies: 4,
+            maxColors: 2
+        };
+
+        /**
+         * アプリケーションの状態管理とロジック
+         */
+        class DeckBuilder {
+            constructor() {
+                this.allCards = []; // ロードされた全カード
+                this.deck = {};     // { cardId: count }
+                
+                // DOM要素のキャッシュ
+                this.dom = {
+                    cardPool: document.getElementById('cardPool'),
+                    deckList: document.getElementById('deckList'),
+                    searchInput: document.getElementById('searchInput'),
+                    colorFilter: document.getElementById('colorFilter'),
+                    typeFilter: document.getElementById('typeFilter'),
+                    themeToggle: document.getElementById('themeToggle'),
+                    stats: {
+                        total: document.getElementById('totalCount'),
+                        unit: document.getElementById('unitCount'),
+                        pilot: document.getElementById('pilotCount'),
+                        command: document.getElementById('commandCount'),
+                        base: document.getElementById('baseCount'),
+                        colors: document.getElementById('deckColors')
+                    }
+                };
+
+                this.init();
+            }
+
+            async init() {
+                this.initTheme(); // テーマ初期化
+                await this.loadData();
+                this.setupEventListeners();
+                this.renderCardPool();
+                this.renderStats();
+            }
+
+            /**
+             * テーマ（ダーク/ライト）の初期化
+             */
+            initTheme() {
+                // ローカルストレージまたはOSの設定を確認
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+
+                // トグルボタンのイベント
+                this.dom.themeToggle.addEventListener('click', () => {
+                    if (document.documentElement.classList.contains('dark')) {
+                        document.documentElement.classList.remove('dark');
+                        localStorage.theme = 'light';
+                    } else {
+                        document.documentElement.classList.add('dark');
+                        localStorage.theme = 'dark';
+                    }
+                });
+            }
+
+            /**
+             * データの読み込み
+             */
+            async loadData() {
+                try {
+                    const promises = CONFIG.sources.map(async (source) => {
+                        const response = await fetch(source.jsonUrl);
+                        if (!response.ok) throw new Error(`Failed to load ${source.id}`);
+                        const data = await response.json();
+                        
+                        // データを整形して統合
+                        return data.map(card => ({
+                            ...card,
+                            // JSONのプロパティを内部ロジック用にマッピング
+                            id: card.card_number,             // IDとしてcard_numberを使用
+                            cost: parseInt(card.Cost) || 0,   // ソート用に数値化
+                            // 画像パスの生成 (例: GD01-001 -> .../GD01-001.webp)
+                            imageUrl: `${source.imageBaseUrl}${card.card_number}.webp`,
+                            sourceId: source.id
+                        }));
+                    });
+
+                    const results = await Promise.all(promises);
+                    this.allCards = results.flat();
+                    
+                    // ID順にソート
+                    this.allCards.sort((a, b) => a.id.localeCompare(b.id));
+
+                    this.showToast('カードデータを読み込みました', 'success');
+                } catch (error) {
+                    console.error(error);
+                    this.showToast('データの読み込みに失敗しました。CORS設定などを確認してください。', 'error');
+                    this.dom.cardPool.innerHTML = `<div class="col-span-full text-center text-red-500">読み込みエラー<br>${error.message}</div>`;
+                }
+            }
+
+            setupEventListeners() {
+                const render = () => this.renderCardPool();
+                this.dom.searchInput.addEventListener('input', render);
+                this.dom.colorFilter.addEventListener('change', render);
+                this.dom.typeFilter.addEventListener('change', render);
+            }
+
+            /**
+             * カードプールのフィルタリングと描画
+             */
+            getFilteredCards() {
+                const searchText = this.dom.searchInput.value.toLowerCase();
+                const colorVal = this.dom.colorFilter.value;
+                const typeVal = this.dom.typeFilter.value;
+
+                return this.allCards.filter(card => {
+                    const matchText = card.name.toLowerCase().includes(searchText) || card.id.toLowerCase().includes(searchText);
+                    const matchColor = colorVal ? card.color === colorVal : true;
+                    
+                    // APIのtypeフィールドが大文字か小文字か不明なため正規化して比較
+                    const cardType = (card.cardType || card.type || "").toUpperCase();
+                    const matchType = typeVal ? cardType === typeVal : true;
+
+                    return matchText && matchColor && matchType;
+                });
+            }
+
+            renderCardPool() {
+                const cards = this.getFilteredCards();
+                const container = this.dom.cardPool;
+                container.innerHTML = '';
+
+                if (cards.length === 0) {
+                    container.innerHTML = `<div class="col-span-full text-center text-gray-400 dark:text-gray-500 py-10">該当するカードがありません</div>`;
+                    return;
+                }
+
+                cards.forEach(card => {
+                    const div = document.createElement('div');
+                    div.className = 'card-item cursor-pointer relative group';
+                    div.innerHTML = `
+                        <img src="${card.imageUrl}" alt="${card.name}" loading="lazy" 
+                             class="card-img w-full rounded shadow-sm bg-gray-200 dark:bg-gray-700"
+                             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTQwIiBmaWxsPSIjZGRkIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE0MCIvPjx0ZXh0IHg9IjUwIiB5PSI3MCIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzU1NSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+'">
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center">
+                            <span class="opacity-0 group-hover:opacity-100 bg-blue-600 text-white text-xs px-2 py-1 rounded shadow">追加</span>
+                        </div>
+                        <div class="text-xs text-gray-600 dark:text-gray-300 mt-1 truncate font-bold text-center">${card.name}</div>
+                        <div class="text-[10px] text-gray-400 dark:text-gray-500 text-center">${card.id}</div>
+                    `;
+                    div.onclick = () => this.addCard(card.id);
+                    container.appendChild(div);
+                });
+            }
+
+            /**
+             * デッキ操作ロジック
+             */
+            addCard(cardId) {
+                const currentCount = this.deck[cardId] || 0;
+                const totalCards = this.getTotalCount();
+                const card = this.allCards.find(c => c.id === cardId);
+
+                // 1. 同一番号4枚制限
+                if (currentCount >= CONFIG.maxCopies) {
+                    this.showToast('同じカードは4枚までです', 'error');
+                    return;
+                }
+
+                // 2. メインデッキ50枚制限
+                if (totalCards >= CONFIG.maxDeckSize) {
+                    this.showToast(`デッキは${CONFIG.maxDeckSize}枚までです`, 'error');
+                    return;
+                }
+
+                // 3. 2色制限
+                // 現在デッキに含まれている色セットを取得
+                const currentColors = new Set();
+                Object.keys(this.deck).forEach(id => {
+                    const c = this.allCards.find(card => card.id === id);
+                    if (c && c.color) currentColors.add(c.color);
+                });
+
+                // 新しいカードの色が既存セットに含まれておらず、かつ既に2色ある場合
+                if (card.color && !currentColors.has(card.color) && currentColors.size >= CONFIG.maxColors) {
+                    this.showToast('デッキに使用できるのは2色までです', 'error');
+                    return;
+                }
+
+                // 追加処理
+                this.deck[cardId] = currentCount + 1;
+                this.renderDeck();
+                this.renderStats();
+            }
+
+            removeCard(cardId) {
+                if (this.deck[cardId]) {
+                    this.deck[cardId]--;
+                    if (this.deck[cardId] <= 0) {
+                        delete this.deck[cardId];
+                    }
+                    this.renderDeck();
+                    this.renderStats();
+                }
+            }
+
+            clearDeck() {
+                if(confirm('デッキをリセットしますか？')) {
+                    this.deck = {};
+                    this.renderDeck();
+                    this.renderStats();
+                }
+            }
+
+            getTotalCount() {
+                return Object.values(this.deck).reduce((sum, count) => sum + count, 0);
+            }
+
+            /**
+             * デッキ描画
+             */
+            renderDeck() {
+                const container = this.dom.deckList;
+                container.innerHTML = '';
+
+                // デッキ内のカードIDを取得し、コスト順、タイプ順などでソート
+                const deckIds = Object.keys(this.deck).sort((a, b) => {
+                    const cardA = this.allCards.find(c => c.id === a);
+                    const cardB = this.allCards.find(c => c.id === b);
+                    // まず種類順
+                    const typeOrder = { 'UNIT': 1, 'PILOT': 2, 'COMMAND': 3, 'BASE': 4 };
+                    const typeA = typeOrder[(cardA.cardType || cardA.type).toUpperCase()] || 99;
+                    const typeB = typeOrder[(cardB.cardType || cardB.type).toUpperCase()] || 99;
+                    if (typeA !== typeB) return typeA - typeB;
+                    // 次にコスト順 (コストがない場合は0)
+                    return (cardA.cost || 0) - (cardB.cost || 0);
+                });
+
+                if (deckIds.length === 0) {
+                    container.innerHTML = `<div class="text-center text-gray-400 mt-10 text-sm">リストからカードを選択して<br>デッキに追加してください</div>`;
+                    return;
+                }
+
+                deckIds.forEach(id => {
+                    const card = this.allCards.find(c => c.id === id);
+                    const count = this.deck[id];
+
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center gap-2 bg-white dark:bg-gray-700 dark:text-gray-100 p-2 rounded shadow-sm hover:shadow transition border-l-4';
+                    
+                    // 色ごとに線の色を変える
+                    const colorMap = { 
+                        'Blue': 'border-blue-500', 
+                        'Green': 'border-green-500', 
+                        'Red': 'border-red-500', 
+                        'White': 'border-gray-400'
+                    };
+                    div.classList.add(colorMap[card.color] || 'border-gray-300');
+
+                    div.innerHTML = `
+                        <div class="font-bold w-6 text-center text-lg text-blue-800 dark:text-blue-300">${count}</div>
+                        <img src="${card.imageUrl}" class="w-10 h-14 object-cover rounded bg-gray-200 dark:bg-gray-600">
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-bold truncate">${card.name}</div>
+                            <div class="text-[10px] text-gray-500 dark:text-gray-400 flex gap-2">
+                                <span>${card.id}</span>
+                                <span>${card.cardType || card.type}</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                            <button class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 text-xs" onclick="deckBuilder.addCard('${id}')">+</button>
+                            <button class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 text-xs" onclick="deckBuilder.removeCard('${id}')">-</button>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+
+            /**
+             * 統計情報の更新
+             */
+            renderStats() {
+                let unit = 0, pilot = 0, command = 0, base = 0;
+                const colors = new Set();
+                const total = this.getTotalCount();
+
+                Object.keys(this.deck).forEach(id => {
+                    const count = this.deck[id];
+                    const card = this.allCards.find(c => c.id === id);
+                    if (!card) return;
+
+                    const type = (card.cardType || card.type).toUpperCase();
+                    if (type === 'UNIT') unit += count;
+                    else if (type === 'PILOT') pilot += count; // PILOT/CHARACTER
+                    else if (type === 'COMMAND') command += count;
+                    else if (type === 'BASE') base += count;
+
+                    if (card.color) colors.add(card.color);
+                });
+
+                // テキスト更新
+                this.dom.stats.total.innerText = total;
+                // 色付け (50枚ちょうどのとき緑、それ以外は通常)
+                this.dom.stats.total.className = `text-2xl font-bold ${total === 50 ? 'text-green-600 dark:text-green-400' : 'text-blue-600 dark:text-blue-400'}`;
+
+                this.dom.stats.unit.innerText = unit;
+                this.dom.stats.pilot.innerText = pilot;
+                this.dom.stats.command.innerText = command;
+                this.dom.stats.base.innerText = base;
+
+                // カラーアイコン表示
+                this.dom.stats.colors.innerHTML = '';
+                if (colors.size === 0) {
+                    this.dom.stats.colors.innerHTML = '<span class="text-gray-400">-</span>';
+                } else {
+                    colors.forEach(color => {
+                        const span = document.createElement('span');
+                        // 基本クラス
+                        span.className = `px-2 py-0.5 text-xs rounded font-bold border`;
+                        span.innerText = color;
+                        
+                        // 色のマッピング
+                        const bgMap = { 
+                            'Blue': 'bg-blue-600 text-white border-blue-600', 
+                            'Green': 'bg-green-600 text-white border-green-600', 
+                            'Red': 'bg-red-600 text-white border-red-600', 
+                            'White': 'bg-white text-gray-800 border-gray-300 dark:bg-gray-200 dark:text-gray-900 dark:border-gray-400' 
+                        };
+
+                        if (bgMap[color]) {
+                            // クラスを追加
+                            const classes = bgMap[color].split(' ');
+                            span.classList.add(...classes);
+                        } else {
+                            // 定義外の色
+                            span.classList.add('bg-gray-400', 'text-white', 'border-gray-400');
+                        }
+                        
+                        this.dom.stats.colors.appendChild(span);
+                    });
+                }
+            }
+
+            /**
+             * クリップボードへコピー
+             */
+            exportDeck() {
+                if (this.getTotalCount() === 0) {
+                    this.showToast('デッキが空です', 'error');
+                    return;
+                }
+                const lines = ['【ガンダムカードゲーム デッキリスト】'];
+                Object.keys(this.deck).forEach(id => {
+                    const card = this.allCards.find(c => c.id === id);
+                    lines.push(`${card.id} ${card.name} x${this.deck[id]}`);
+                });
+                const text = lines.join('\n');
+                
+                // コピー処理
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textArea);
+
+                this.showToast('クリップボードにコピーしました', 'success');
+            }
+
+            /**
+             * トースト通知の表示
+             */
+            showToast(message, type = 'info') {
+                const container = document.getElementById('toastContainer');
+                const div = document.createElement('div');
+                
+                const bgClass = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-gray-800 dark:bg-gray-600';
+                
+                div.className = `toast ${bgClass} text-white px-4 py-2 rounded shadow-lg text-sm flex items-center gap-2`;
+                div.innerHTML = `<span>${message}</span>`;
+                
+                container.appendChild(div);
+                setTimeout(() => {
+                    div.remove();
+                }, 3000);
+            }
+        }
+
+        // アプリケーション起動
+        const deckBuilder = new DeckBuilder();
+    </script>
+</body>
+</html>
