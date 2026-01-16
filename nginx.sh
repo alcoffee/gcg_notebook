@@ -1,3 +1,3 @@
-docker run --name nginx-g \
+docker run --name local-nginx \
   -v $(pwd):/usr/share/nginx/html:ro \
-  -p 9090:80 -d nginx
+  -p 8080:80 -d nginx
