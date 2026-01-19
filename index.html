@@ -94,31 +94,60 @@
 
     <!-- メインコンテンツ -->
     <main class="flex-1 flex overflow-hidden">
-        
+
         <!-- 左カラム：カードプール (検索・一覧) -->
         <section class="flex-1 flex flex-col border-r border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 w-2/3 transition-colors duration-300">
             <!-- フィルターエリア -->
-            <div class="p-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 grid grid-cols-2 md:grid-cols-4 gap-2 transition-colors duration-300">
+            <div class="p-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex flex-col gap-3 transition-colors duration-300">
+                <!-- 検索ボックス -->
                 <input type="text" id="searchInput" placeholder="名前・No.で検索" 
-                    class="col-span-2 p-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-600 dark:text-white dark:placeholder-gray-300">
-                
-                <select id="colorFilter" class="p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 dark:text-white">
-                    <option value="">全色</option>
-                    <option value="Red">赤</option>
-                    <option value="Blue">青</option>
-                    <option value="Green">緑</option>
-                    <option value="White">白</option>
-                </select>
+                    class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-600 dark:text-white dark:placeholder-gray-300">
 
-                <select id="typeFilter" class="p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-600 dark:text-white">
-                    <option value="">全タイプ</option>
-                    <option value="UNIT">ユニット</option>
-                    <option value="PILOT">パイロット</option>
-                    <option value="COMMAND">コマンド</option>
-                    <option value="BASE">ベース</option>
-                </select>
+                <div class="flex flex-col md:flex-row gap-4">
+                    <!-- 色フィルター (チェックボックス) -->
+                    <div id="colorFilterContainer" class="flex flex-wrap gap-3 items-center px-1">
+                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400">COLOR:</span>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="Red" class="color-filter form-checkbox h-4 w-4 text-red-600 rounded border-gray-300 focus:ring-red-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-red-600 dark:group-hover:text-red-400">赤</span>
+                        </label>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="Blue" class="color-filter form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">青</span>
+                        </label>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="Green" class="color-filter form-checkbox h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-400">緑</span>
+                        </label>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="White" class="color-filter form-checkbox h-4 w-4 text-gray-500 rounded border-gray-300 focus:ring-gray-400 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-gray-500 dark:group-hover:text-gray-300">白</span>
+                        </label>
+                    </div>
+
+                    <!-- タイプフィルター (チェックボックス) -->
+                    <div id="typeFilterContainer" class="flex flex-wrap gap-3 items-center px-1 border-l border-gray-300 dark:border-gray-600 pl-4 md:border-l">
+                        <span class="text-xs font-bold text-gray-500 dark:text-gray-400">TYPE:</span>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="UNIT" class="type-filter form-checkbox h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">ユニット</span>
+                        </label>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="PILOT" class="type-filter form-checkbox h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-green-600 dark:group-hover:text-green-400">パイロット</span>
+                        </label>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="COMMAND" class="type-filter form-checkbox h-4 w-4 text-yellow-600 rounded border-gray-300 focus:ring-yellow-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-yellow-600 dark:group-hover:text-yellow-400">コマンド</span>
+                        </label>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="BASE" class="type-filter form-checkbox h-4 w-4 text-gray-600 rounded border-gray-300 focus:ring-gray-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-gray-600 dark:group-hover:text-gray-400">ベース</span>
+                        </label>
+                    </div>
+                </div>
             </div>
-            
+
             <!-- カードリスト表示エリア -->
             <div id="cardPool" class="flex-1 overflow-y-auto p-4 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 content-start">
                 <!-- JavaScriptでここにカードが挿入されます -->
@@ -136,7 +165,7 @@
                     <h2 class="font-bold text-lg dark:text-white">現在のデッキ</h2>
                     <span id="totalCount" class="text-2xl font-bold text-blue-600 dark:text-blue-400">0<span class="text-sm text-gray-500 dark:text-gray-400 font-normal">/50</span></span>
                 </div>
-                
+
                 <!-- 枚数内訳 -->
                 <div class="grid grid-cols-4 gap-1 text-center text-xs mb-3">
                     <div class="bg-blue-100 dark:bg-blue-900 p-1 rounded">
@@ -257,14 +286,13 @@
             constructor() {
                 this.allCards = []; // ロードされた全カード
                 this.deck = {};     // { cardId: count }
-                
+
                 // DOM要素のキャッシュ
                 this.dom = {
                     cardPool: document.getElementById('cardPool'),
                     deckList: document.getElementById('deckList'),
                     searchInput: document.getElementById('searchInput'),
-                    colorFilter: document.getElementById('colorFilter'),
-                    typeFilter: document.getElementById('typeFilter'),
+                    // colorFilter, typeFilter は削除し、直接クエリセレクタで取得します
                     themeToggle: document.getElementById('themeToggle'),
                     stats: {
                         total: document.getElementById('totalCount'),
@@ -319,7 +347,7 @@
                         const response = await fetch(source.jsonUrl);
                         if (!response.ok) throw new Error(`Failed to load ${source.id}`);
                         const data = await response.json();
-                        
+
                         // データを整形して統合
                         return data.map(card => ({
                             ...card,
@@ -334,7 +362,7 @@
 
                     const results = await Promise.all(promises);
                     this.allCards = results.flat();
-                    
+
                     // ID順にソート
                     this.allCards.sort((a, b) => a.id.localeCompare(b.id));
 
@@ -349,8 +377,16 @@
             setupEventListeners() {
                 const render = () => this.renderCardPool();
                 this.dom.searchInput.addEventListener('input', render);
-                this.dom.colorFilter.addEventListener('change', render);
-                this.dom.typeFilter.addEventListener('change', render);
+
+                // カラーフィルター（チェックボックス）のイベントリスナー設定
+                document.querySelectorAll('.color-filter').forEach(checkbox => {
+                    checkbox.addEventListener('change', render);
+                });
+
+                // タイプフィルター（チェックボックス）のイベントリスナー設定
+                document.querySelectorAll('.type-filter').forEach(checkbox => {
+                    checkbox.addEventListener('change', render);
+                });
             }
 
             /**
@@ -358,16 +394,24 @@
              */
             getFilteredCards() {
                 const searchText = this.dom.searchInput.value.toLowerCase();
-                const colorVal = this.dom.colorFilter.value;
-                const typeVal = this.dom.typeFilter.value;
+
+                // チェックされている色を取得
+                const checkedColors = Array.from(document.querySelectorAll('.color-filter:checked')).map(cb => cb.value);
+
+                // チェックされているタイプを取得
+                const checkedTypes = Array.from(document.querySelectorAll('.type-filter:checked')).map(cb => cb.value);
 
                 return this.allCards.filter(card => {
                     const matchText = card.name.toLowerCase().includes(searchText) || card.id.toLowerCase().includes(searchText);
-                    const matchColor = colorVal ? card.color === colorVal : true;
-                    
+
+                    // 色フィルター: 未選択時は全表示、選択時はOR検索
+                    const matchColor = checkedColors.length === 0 || checkedColors.includes(card.color);
+
                     // APIのtypeフィールドが大文字か小文字か不明なため正規化して比較
                     const cardType = (card.cardType || card.type || "").toUpperCase();
-                    const matchType = typeVal ? cardType === typeVal : true;
+
+                    // タイプフィルター: 未選択時は全表示、選択時はOR検索
+                    const matchType = checkedTypes.length === 0 || checkedTypes.includes(cardType);
 
                     return matchText && matchColor && matchType;
                 });
@@ -495,7 +539,7 @@
 
                     const div = document.createElement('div');
                     div.className = 'flex items-center gap-2 bg-white dark:bg-gray-700 dark:text-gray-100 p-2 rounded shadow-sm hover:shadow transition border-l-4';
-                    
+
                     // 色ごとに線の色を変える
                     const colorMap = { 
                         'Blue': 'border-blue-500', 
@@ -566,7 +610,7 @@
                         // 基本クラス
                         span.className = `px-2 py-0.5 text-xs rounded font-bold border`;
                         span.innerText = color;
-                        
+
                         // 色のマッピング
                         const bgMap = { 
                             'Blue': 'bg-blue-600 text-white border-blue-600', 
@@ -583,7 +627,7 @@
                             // 定義外の色
                             span.classList.add('bg-gray-400', 'text-white', 'border-gray-400');
                         }
-                        
+
                         this.dom.stats.colors.appendChild(span);
                     });
                 }
@@ -603,7 +647,7 @@
                     lines.push(`${card.id} ${card.name} x${this.deck[id]}`);
                 });
                 const text = lines.join('\n');
-                
+
                 // コピー処理
                 const textArea = document.createElement("textarea");
                 textArea.value = text;
@@ -621,12 +665,12 @@
             showToast(message, type = 'info') {
                 const container = document.getElementById('toastContainer');
                 const div = document.createElement('div');
-                
+
                 const bgClass = type === 'error' ? 'bg-red-500' : type === 'success' ? 'bg-green-500' : 'bg-gray-800 dark:bg-gray-600';
-                
+
                 div.className = `toast ${bgClass} text-white px-4 py-2 rounded shadow-lg text-sm flex items-center gap-2`;
                 div.innerHTML = `<span>${message}</span>`;
-                
+
                 container.appendChild(div);
                 setTimeout(() => {
                     div.remove();
