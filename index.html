@@ -130,6 +130,10 @@
                             <input type="checkbox" value="White" class="color-filter form-checkbox h-4 w-4 text-gray-500 rounded border-gray-300 focus:ring-gray-400 dark:bg-gray-600 dark:border-gray-500">
                             <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-gray-500 dark:group-hover:text-gray-300">白</span>
                         </label>
+                        <label class="inline-flex items-center space-x-1 cursor-pointer group">
+                            <input type="checkbox" value="Purple" class="color-filter form-checkbox h-4 w-4 text-purple-600 rounded border-gray-300 focus:ring-purple-500 dark:bg-gray-600 dark:border-gray-500">
+                            <span class="text-sm text-gray-700 dark:text-gray-200 group-hover:text-purple-600 dark:group-hover:text-purple-400">紫</span>
+                        </label>
                     </div>
 
                     <!-- タイプフィルター (チェックボックス) -->
@@ -500,6 +504,7 @@
                     'Green': 'text-green-600 dark:text-green-400',
                     'Yellow': 'text-yellow-600 dark:text-yellow-400',
                     'White': 'text-gray-600 dark:text-gray-400',
+                    'Purple': 'text-purple-600 dark:text-purple-400',
                     'Black': 'text-gray-800 dark:text-gray-300'
                 };
                 const titleColor = colorClasses[card.color] || 'text-gray-800 dark:text-white';
@@ -664,7 +669,8 @@
                         'Blue': 'border-blue-500',
                         'Green': 'border-green-500',
                         'Red': 'border-red-500',
-                        'White': 'border-gray-400'
+                        'White': 'border-gray-400',
+                        'Purple': 'border-purple-500'
                     };
                     div.classList.add(colorMap[card.color] || 'border-gray-300');
 
@@ -736,7 +742,8 @@
                             'Blue': 'bg-blue-600 text-white border-blue-600',
                             'Green': 'bg-green-600 text-white border-green-600',
                             'Red': 'bg-red-600 text-white border-red-600',
-                            'White': 'bg-white text-gray-800 border-gray-300 dark:bg-gray-200 dark:text-gray-900 dark:border-gray-400'
+                            'White': 'bg-white text-gray-800 border-gray-300 dark:bg-gray-200 dark:text-gray-900 dark:border-gray-400',
+                            'Purple': 'bg-purple-600 text-white border-purple-600'
                         };
 
                         if (bgMap[color]) {
