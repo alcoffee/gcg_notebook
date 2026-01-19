@@ -99,9 +99,16 @@
         <section class="flex-1 flex flex-col border-r border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 w-2/3 transition-colors duration-300">
             <!-- フィルターエリア -->
             <div class="p-3 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 flex flex-col gap-3 transition-colors duration-300">
-                <!-- 検索ボックス -->
-                <input type="text" id="searchInput" placeholder="名前・No.で検索" 
-                    class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-600 dark:text-white dark:placeholder-gray-300">
+                <!-- 検索ボックスと弾数フィルター -->
+                <div class="flex gap-2">
+                    <input type="text" id="searchInput" placeholder="名前・No.で検索"
+                        class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-600 dark:text-white dark:placeholder-gray-300">
+
+                    <select id="sourceFilter" class="w-32 md:w-40 p-2 border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-600 dark:text-white text-sm">
+                        <option value="">全弾</option>
+                        <!-- JSで動的に追加されます -->
+                    </select>
+                </div>
 
                 <div class="flex flex-col md:flex-row gap-4">
                     <!-- 色フィルター (チェックボックス) -->
@@ -215,6 +222,11 @@
         </section>
     </main>
 
+    <!-- ツールチップ (ポップアップ) -->
+    <div id="cardTooltip" class="fixed hidden z-50 p-4 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded shadow-xl max-w-xs pointer-events-none text-sm transition-opacity duration-150">
+        <!-- 内容はJSで動的に生成 -->
+    </div>
+
     <!-- トースト通知用コンテナ -->
     <div id="toastContainer" class="fixed bottom-5 left-1/2 transform -translate-x-1/2 flex flex-col gap-2 z-50 pointer-events-none"></div>
 
@@ -292,8 +304,10 @@
                     cardPool: document.getElementById('cardPool'),
                     deckList: document.getElementById('deckList'),
                     searchInput: document.getElementById('searchInput'),
+                    sourceFilter: document.getElementById('sourceFilter'), // 追加
                     // colorFilter, typeFilter は削除し、直接クエリセレクタで取得します
                     themeToggle: document.getElementById('themeToggle'),
+                    tooltip: document.getElementById('cardTooltip'),
                     stats: {
                         total: document.getElementById('totalCount'),
                         unit: document.getElementById('unitCount'),
@@ -309,6 +323,7 @@
 
             async init() {
                 this.initTheme(); // テーマ初期化
+                this.renderSourceFilterOptions(); // ソースフィルターの選択肢生成
                 await this.loadData();
                 this.setupEventListeners();
                 this.renderCardPool();
@@ -335,6 +350,22 @@
                         document.documentElement.classList.add('dark');
                         localStorage.theme = 'dark';
                     }
+                });
+            }
+
+            /**
+             * ソースフィルターの選択肢を生成
+             */
+            renderSourceFilterOptions() {
+                const select = this.dom.sourceFilter;
+                // 初期化（全弾のみ残す）
+                select.innerHTML = '<option value="">全弾</option>';
+
+                CONFIG.sources.forEach(source => {
+                    const option = document.createElement('option');
+                    option.value = source.id;
+                    option.textContent = source.name;
+                    select.appendChild(option);
                 });
             }
 
@@ -377,6 +408,7 @@
             setupEventListeners() {
                 const render = () => this.renderCardPool();
                 this.dom.searchInput.addEventListener('input', render);
+                this.dom.sourceFilter.addEventListener('change', render); // 追加
 
                 // カラーフィルター（チェックボックス）のイベントリスナー設定
                 document.querySelectorAll('.color-filter').forEach(checkbox => {
@@ -394,6 +426,7 @@
              */
             getFilteredCards() {
                 const searchText = this.dom.searchInput.value.toLowerCase();
+                const sourceVal = this.dom.sourceFilter.value;
 
                 // チェックされている色を取得
                 const checkedColors = Array.from(document.querySelectorAll('.color-filter:checked')).map(cb => cb.value);
@@ -404,6 +437,9 @@
                 return this.allCards.filter(card => {
                     const matchText = card.name.toLowerCase().includes(searchText) || card.id.toLowerCase().includes(searchText);
 
+                    // ソースフィルター: 未選択時は全表示
+                    const matchSource = sourceVal ? card.sourceId === sourceVal : true;
+
                     // 色フィルター: 未選択時は全表示、選択時はOR検索
                     const matchColor = checkedColors.length === 0 || checkedColors.includes(card.color);
 
@@ -413,7 +449,7 @@
                     // タイプフィルター: 未選択時は全表示、選択時はOR検索
                     const matchType = checkedTypes.length === 0 || checkedTypes.includes(cardType);
 
-                    return matchText && matchColor && matchType;
+                    return matchText && matchSource && matchColor && matchType;
                 });
             }
 
@@ -431,7 +467,7 @@
                     const div = document.createElement('div');
                     div.className = 'card-item cursor-pointer relative group';
                     div.innerHTML = `
-                        <img src="${card.imageUrl}" alt="${card.name}" loading="lazy" 
+                        <img src="${card.imageUrl}" alt="${card.name}" loading="lazy"
                              class="card-img w-full rounded shadow-sm bg-gray-200 dark:bg-gray-700"
                              onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMDAgMTQwIiBmaWxsPSIjZGRkIj48cmVjdCB3aWR0aD0iMTAwIiBoZWlnaHQ9IjE0MCIvPjx0ZXh0IHg9IjUwIiB5PSI3MCIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzU1NSI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+'">
                         <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all rounded flex items-center justify-center">
@@ -441,8 +477,91 @@
                         <div class="text-[10px] text-gray-400 dark:text-gray-500 text-center">${card.id}</div>
                     `;
                     div.onclick = () => this.addCard(card.id);
+
+                    // ツールチップイベント
+                    div.addEventListener('mouseenter', (e) => this.showTooltip(e, card));
+                    div.addEventListener('mouseleave', () => this.hideTooltip());
+                    div.addEventListener('mousemove', (e) => this.moveTooltip(e));
+
                     container.appendChild(div);
                 });
+            }
+
+            /**
+             * ツールチップ表示制御
+             */
+            showTooltip(e, card) {
+                const t = this.dom.tooltip;
+
+                // 色によるヘッダー装飾
+                const colorClasses = {
+                    'Red': 'text-red-600 dark:text-red-400',
+                    'Blue': 'text-blue-600 dark:text-blue-400',
+                    'Green': 'text-green-600 dark:text-green-400',
+                    'Yellow': 'text-yellow-600 dark:text-yellow-400',
+                    'White': 'text-gray-600 dark:text-gray-400',
+                    'Black': 'text-gray-800 dark:text-gray-300'
+                };
+                const titleColor = colorClasses[card.color] || 'text-gray-800 dark:text-white';
+
+                // スペック情報の生成
+                let statsHtml = '';
+                const parts = [];
+                if (card.AP) parts.push(`AP:${card.AP}`);
+                if (card.HP) parts.push(`HP:${card.HP}`);
+                if (card.Lv) parts.push(`Lv:${card.Lv}`);
+
+                if (parts.length > 0) {
+                    statsHtml = `<div class="flex gap-3 mb-2 font-bold text-gray-700 dark:text-gray-200 bg-gray-100 dark:bg-gray-700 p-1 px-2 rounded">
+                        ${parts.map(p => `<span>${p}</span>`).join('')}
+                    </div>`;
+                }
+
+                // HTML生成
+                t.innerHTML = `
+                    <div class="flex flex-col gap-1">
+                        <div class="font-bold border-b border-gray-200 dark:border-gray-700 pb-1 mb-1 flex justify-between items-baseline">
+                            <span class="${titleColor} text-base">${card.name}</span>
+                            <span class="text-xs text-gray-500 font-normal">COST: ${card.Cost || '-'}</span>
+                        </div>
+                        ${statsHtml}
+                        ${card.terrain ? `<div class="text-xs mb-1"><span class="text-gray-500">適正:</span> <span class="dark:text-gray-300">${card.terrain}</span></div>` : ''}
+                        <div class="text-xs leading-relaxed whitespace-pre-wrap mb-2 dark:text-gray-300">${card.description || '-'}</div>
+                        ${card.features ? `<div class="text-[10px] text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 pt-1">${card.features}</div>` : ''}
+                    </div>
+                `;
+
+                t.classList.remove('hidden');
+                this.moveTooltip(e);
+            }
+
+            hideTooltip() {
+                this.dom.tooltip.classList.add('hidden');
+            }
+
+            moveTooltip(e) {
+                const t = this.dom.tooltip;
+                const offset = 15; // マウスからの距離
+
+                // 現在のウィンドウサイズ
+                const winWidth = window.innerWidth;
+                const winHeight = window.innerHeight;
+
+                let left = e.clientX + offset;
+                let top = e.clientY + offset;
+
+                // 画面からはみ出る場合の補正
+                if (left + t.offsetWidth > winWidth) {
+                    left = e.clientX - t.offsetWidth - offset;
+                }
+
+                // 下にはみ出る場合は上に表示
+                if (top + t.offsetHeight > winHeight) {
+                    top = e.clientY - t.offsetHeight - offset;
+                }
+
+                t.style.left = `${left}px`;
+                t.style.top = `${top}px`;
             }
 
             /**
@@ -541,10 +660,10 @@
                     div.className = 'flex items-center gap-2 bg-white dark:bg-gray-700 dark:text-gray-100 p-2 rounded shadow-sm hover:shadow transition border-l-4';
 
                     // 色ごとに線の色を変える
-                    const colorMap = { 
-                        'Blue': 'border-blue-500', 
-                        'Green': 'border-green-500', 
-                        'Red': 'border-red-500', 
+                    const colorMap = {
+                        'Blue': 'border-blue-500',
+                        'Green': 'border-green-500',
+                        'Red': 'border-red-500',
                         'White': 'border-gray-400'
                     };
                     div.classList.add(colorMap[card.color] || 'border-gray-300');
@@ -564,6 +683,7 @@
                             <button class="w-6 h-6 flex items-center justify-center bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 text-xs" onclick="deckBuilder.removeCard('${id}')">-</button>
                         </div>
                     `;
+
                     container.appendChild(div);
                 });
             }
@@ -612,11 +732,11 @@
                         span.innerText = color;
 
                         // 色のマッピング
-                        const bgMap = { 
-                            'Blue': 'bg-blue-600 text-white border-blue-600', 
-                            'Green': 'bg-green-600 text-white border-green-600', 
-                            'Red': 'bg-red-600 text-white border-red-600', 
-                            'White': 'bg-white text-gray-800 border-gray-300 dark:bg-gray-200 dark:text-gray-900 dark:border-gray-400' 
+                        const bgMap = {
+                            'Blue': 'bg-blue-600 text-white border-blue-600',
+                            'Green': 'bg-green-600 text-white border-green-600',
+                            'Red': 'bg-red-600 text-white border-red-600',
+                            'White': 'bg-white text-gray-800 border-gray-300 dark:bg-gray-200 dark:text-gray-900 dark:border-gray-400'
                         };
 
                         if (bgMap[color]) {
